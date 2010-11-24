@@ -564,20 +564,84 @@ wtfRenamerAction::~wtfRenamerAction()
 int wtfRenamerAction::PerformAction()
 {
 	wxASSERT_MSG(m_data.path != NULL, wxT("No arguments"));
+	wxArrayString dirs;
+	wxFileName fn;
+	int rv;
+	size_t i, cnt;
 	switch (m_type)
 	{
 		case wtfRenamerActionCreateDir:
 			wxLogDebug(wxT("create dir '%s'"), m_data.path->c_str());
+			fn.AssignDir( *(m_data.path) );
+			if (!fn.Normalize(wxPATH_NORM_ENV_VARS | wxPATH_NORM_DOTS | wxPATH_NORM_ABSOLUTE | wxPATH_NORM_LONG | wxPATH_NORM_TILDE))
+			{
+				return W_RENAMER_ERROR_NOT_PERMITTED;
+			}
+			if (fn.GetDirCount() == 0)
+			{
+				return W_RENAMER_ERROR_SYS_ERROR;
+			}
+			if (fn.DirExists())
+			{
+				return W_RENAMER_ERROR_FILE_EXISTS;
+			}
+			dirs = fn.GetDirs();
+			cnt = dirs.GetCount();
+			for (i = 0; i < cnt; i++)
+			{
+				fn.RemoveLastDir();
+			}
+			i = 0;
+			while ((i < cnt - 1) && fn.IsDirReadable())
+			{
+				fn.AppendDir( dirs.Item(i) );
+				i++;
+			}
+			if (!fn.IsDirReadable())
+			{
+				if (!fn.DirExists())
+				{
+					return (wxFileExists( fn.GetFullPath() )) ? W_RENAMER_ERROR_NOT_DIR : W_RENAMER_ERROR_DIR_NOT_EXISTS;
+				}
+				return W_RENAMER_ERROR_NOT_PERMITTED;
+			}
+			if (!fn.IsDirWritable())
+			{
+				return W_RENAMER_ERROR_NOT_PERMITTED;
+			}
+			fn.AppendDir( dirs.Item(cnt - 1) );
+			if (!wxMkdir( fn.GetFullPath() ))
+			{
+				return W_RENAMER_ERROR_SYS_ERROR;
+			}
 			return 0;
 			break;
 		case wtfRenamerActionRemoveDir:
 			wxLogDebug(wxT("remove dir '%s'"), m_data.path->c_str());
+			rv = wtfRenamer::doGetFileName( *(m_data.path) + wxFileName::GetPathSeparator(), &fn );
+			if (rv != 0)
+			{
+				return rv;
+			}
+			if (fn.GetDirCount() == 0)
+			{
+				return W_RENAMER_ERROR_SYS_ERROR;
+			}
+			fn.RemoveLastDir();
+			if (!fn.IsDirWritable())
+			{
+				return W_RENAMER_ERROR_NOT_PERMITTED;
+			}
+			if (!wxRmdir( *(m_data.path) ))
+			{
+				return W_RENAMER_ERROR_SYS_ERROR;
+			}
 			return 0;
 			break;
 		case wtfRenamerActionCopyFile:
 			wxASSERT_MSG(m_data.newpath != NULL, wxT("Too less arguments"));
 			wxLogDebug(wxT("copy file '%s' -> '%s'"), m_data.path->c_str(), m_data.newpath->c_str());
-			return 0;
+			return W_RENAMER_ERROR_NOT_SUPPORTED;
 			break;
 		case wtfRenamerActionRenameFile:
 			wxASSERT_MSG(m_data.newpath != NULL, wxT("Too less arguments"));
@@ -593,6 +657,19 @@ int wtfRenamerAction::PerformAction()
 			break;
 		case wtfRenamerActionUnlinkFile:
 			wxLogDebug(wxT("remove file '%s'"), m_data.path->c_str());
+			rv = wtfRenamer::doGetFileName( *(m_data.path), &fn );
+			if (rv != 0)
+			{
+				return rv;
+			}
+			if (!fn.IsDirWritable())
+			{
+				return W_RENAMER_ERROR_NOT_PERMITTED;
+			}
+			if (!wxRemoveFile( fn.GetFullPath() ))
+			{
+				return W_RENAMER_ERROR_SYS_ERROR;
+			}
 			return 0;
 			break;
 		default:

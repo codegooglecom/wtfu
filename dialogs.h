@@ -375,10 +375,13 @@ class wtfRenamerOptions : public wsdgRenamerOptions
 DECLARE_ABSTRACT_CLASS(wtfRenamerOptions)
 public:
 	bool m_mustUndo, m_skipAll;
+	long m_flags;
 	wtfRenamerOptions();
 	wtfRenamerOptions(long flags);
 
 	virtual wtfRenamerAnswer OnError(wtfRenamerAction *action, int error, const wxString& msg = wxEmptyString);
+	virtual wtfRenamerAnswer AskUser(wtfRenamerAction *action, int error, const wxString& msg = wxEmptyString);
+	virtual bool ResolveError(wtfRenamerAction *action, int error, wtfRenamerAnswer *ans);
 
 	bool MustUndo() const;
 };

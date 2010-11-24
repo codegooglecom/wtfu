@@ -1054,7 +1054,6 @@ bool wtfTorrentFile::Load(const wxString& filename, const wxString& encoding)
         }
     } else if (info_hash->GetItem(wxT("files"))->GetType() == wbenDATA_LIST) {
         cnt = info_hash->GetItem(wxT("files"))->GetItemCount();
-        wxLogMessage(wxT("files: %d"), cnt);
         for (i = 0; i < cnt && m_error == 0; i++)
         {
             file = info_hash->GetItem(wxT("files"))->GetItem(i);

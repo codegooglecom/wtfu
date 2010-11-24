@@ -2298,114 +2298,140 @@ wtfRenamerOptions::wtfRenamerOptions(long flags)
 {
 }
 
-wtfRenamerAnswer wtfRenamerOptions::OnError(wtfRenamerAction *action, int error, const wxString& WXUNUSED(msg))
+wtfRenamerAnswer wtfRenamerOptions::OnError(wtfRenamerAction *action, int error, const wxString& msg)
+{
+	wtfRenamerAnswer ans;
+
+	if (this->ResolveError(action, error, &ans))
+	{
+		return ans;
+	}
+	return this->AskUser(action, error, msg);
+}
+
+bool wtfRenamerOptions::ResolveError(wtfRenamerAction *action, int WXUNUSED(error), wtfRenamerAnswer *ans)
 {
 	if (action == NULL)
 	{
-		return wtfRenamerAnswerStop;
+		*ans = wtfRenamerAnswerStop;
+		return true;
 	}
 	if (m_skipAll)
 	{
-		return wtfRenamerAnswerSkip;
+		*ans = wtfRenamerAnswerSkip;
+		return true;
 	}
+	return false;
+}
 
+
+wtfRenamerAnswer wtfRenamerOptions::AskUser(wtfRenamerAction *action, int error, const wxString& msg)
+{
 	wtfRenamerActionData action_data = action->m_data;
 	long style = 0;
 	wxString message(wxT("Cannot "));
 
-	switch (action->m_type)
-	{
-		case wtfRenamerActionCreateDir:
-			message += wxT("create directory '");
-			message += *(action_data.path);
-			message += wxT("'");
-			break;
-		case wtfRenamerActionRemoveDir:
-			message += wxT("remove directory '");
-			message += *(action_data.path);
-			message += wxT("'");
-			break;
-		case wtfRenamerActionCopyFile:
-			message += wxT("copy file '");
-			message += *(action_data.path);
-			message += wxT("' to '");
-			message += *(action_data.newpath);
-			message += wxT("'");
-			break;
-		case wtfRenamerActionRenameFile:
-			message += wxT("rename file '");
-			message += *(action_data.path);
-			message += wxT("' to '");
-			message += *(action_data.newpath);
-			message += wxT("'");
-			break;
-		case wtfRenamerActionCreateHardLink:
-			message += wxT("create hard link '");
-			message += *(action_data.newpath);
-			message += wxT("' to file '");
-			message += *(action_data.path);
-			message += wxT("'");
-			break;
-		case wtfRenamerActionCreateSymlink:
-			message += wxT("create symbolic link '");
-			message += *(action_data.newpath);
-			message += wxT("' to directory '");
-			message += *(action_data.path);
-			message += wxT("'");
-			break;
-		case wtfRenamerActionUnlinkFile:
-			message += wxT("remove file '");
-			message += *(action_data.path);
-			message += wxT("'");
-			break;
-		default:
-			return wtfRenamerAnswerStop;
-	}
-	message += wxT("\nError: ");
-
-	switch (error)
-	{
-		case W_RENAMER_ERROR_NOT_SUPPORTED:
-			message += wxT("operation is not supported");
-			style = wtfOK | wtfCANCEL;
-			break;
-		case W_RENAMER_ERROR_DIR_NOT_EXISTS:
-			message += wxT("some directory in source (or destination) doesn't exists");
-			style = wtfRETRY | wtfIGNORE | wtfIGNORE_ALL | wtfSTOP | wtfCANCEL;
-			break;
-		case W_RENAMER_ERROR_NOT_DIR:
-			message += wxT("some component in source (or destination) is not in fact a directory");
-			style = wtfOK | wtfCANCEL;
-			break;
-		case W_RENAMER_ERROR_FILE_NOT_EXISTS:
-			message += wxT("source file doesn't exists");
-			style = wtfOK | wtfCANCEL;
-			break;
-		case W_RENAMER_ERROR_CROSS_FS:
-			message += wxT("source and destination are located on different file systems");
-			style = wtfOK | wtfCANCEL;
-			break;
-		case W_RENAMER_ERROR_NOT_PERMITTED:
-			message += wxT("operation not permitted (permission denied)");
-			style = wtfRETRY | wtfIGNORE | wtfIGNORE_ALL | wtfSTOP | wtfCANCEL;
-			break;
-		case W_RENAMER_ERROR_SYS_ERROR:
-			message += wxT("system error");
-			style = wtfRETRY | wtfIGNORE | wtfIGNORE_ALL | wtfSTOP | wtfCANCEL;
-			break;
-		case W_RENAMER_ERROR_FILE_EXISTS:
-			message += wxT("destination file already exists");
-			style = wtfRETRY | wtfIGNORE | wtfIGNORE_ALL | wtfSTOP | wtfCANCEL;
-			break;
-		default:
-			message += wxT("unknown error");
-			style = wtfOK | wtfCANCEL;
-			break;
-	}
-
-	wtfRenamerQuestion *dlg = WXDEBUG_NEW wtfRenamerQuestion(NULL, wxT("Renamer error"), message, style);
-	int rv = dlg->ShowModal();
+	wtfRenamerQuestion *dlg;
+	int rv;
 	wtfRenamerAnswer ans = wtfRenamerAnswerStop;
+
+	if (msg.Len())
+	{
+		dlg = WXDEBUG_NEW wtfRenamerQuestion(NULL, wxT("Renamer error"), msg, wtfRETRY | wtfIGNORE | wtfIGNORE_ALL | wtfSTOP | wtfCANCEL);
+	} else {
+		switch (action->m_type)
+		{
+			case wtfRenamerActionCreateDir:
+				message += wxT("create directory '");
+				message += *(action_data.path);
+				message += wxT("'");
+				break;
+			case wtfRenamerActionRemoveDir:
+				message += wxT("remove directory '");
+				message += *(action_data.path);
+				message += wxT("'");
+				break;
+			case wtfRenamerActionCopyFile:
+				message += wxT("copy file '");
+				message += *(action_data.path);
+				message += wxT("' to '");
+				message += *(action_data.newpath);
+				message += wxT("'");
+				break;
+			case wtfRenamerActionRenameFile:
+				message += wxT("rename file '");
+				message += *(action_data.path);
+				message += wxT("' to '");
+				message += *(action_data.newpath);
+				message += wxT("'");
+				break;
+			case wtfRenamerActionCreateHardLink:
+				message += wxT("create hard link '");
+				message += *(action_data.newpath);
+				message += wxT("' to file '");
+				message += *(action_data.path);
+				message += wxT("'");
+				break;
+			case wtfRenamerActionCreateSymlink:
+				message += wxT("create symbolic link '");
+				message += *(action_data.newpath);
+				message += wxT("' to directory '");
+				message += *(action_data.path);
+				message += wxT("'");
+				break;
+			case wtfRenamerActionUnlinkFile:
+				message += wxT("remove file '");
+				message += *(action_data.path);
+				message += wxT("'");
+				break;
+			default:
+				return wtfRenamerAnswerStop;
+		}
+		message += wxT("\nError: ");
+        
+		switch (error)
+		{
+			case W_RENAMER_ERROR_NOT_SUPPORTED:
+				message += wxT("operation is not supported");
+				style = wtfOK | wtfCANCEL;
+				break;
+			case W_RENAMER_ERROR_DIR_NOT_EXISTS:
+				message += wxT("some directory in source (or destination) doesn't exists");
+				style = wtfRETRY | wtfIGNORE | wtfIGNORE_ALL | wtfSTOP | wtfCANCEL;
+				break;
+			case W_RENAMER_ERROR_NOT_DIR:
+				message += wxT("some component in source (or destination) is not in fact a directory");
+				style = wtfOK | wtfCANCEL;
+				break;
+			case W_RENAMER_ERROR_FILE_NOT_EXISTS:
+				message += wxT("source file doesn't exists");
+				style = wtfOK | wtfCANCEL;
+				break;
+			case W_RENAMER_ERROR_CROSS_FS:
+				message += wxT("source and destination are located on different file systems");
+				style = wtfOK | wtfCANCEL;
+				break;
+			case W_RENAMER_ERROR_NOT_PERMITTED:
+				message += wxT("operation not permitted (permission denied)");
+				style = wtfRETRY | wtfIGNORE | wtfIGNORE_ALL | wtfSTOP | wtfCANCEL;
+				break;
+			case W_RENAMER_ERROR_SYS_ERROR:
+				message += wxT("system error");
+				style = wtfRETRY | wtfIGNORE | wtfIGNORE_ALL | wtfSTOP | wtfCANCEL;
+				break;
+			case W_RENAMER_ERROR_FILE_EXISTS:
+				message += wxT("destination file already exists");
+				style = wtfRETRY | wtfIGNORE | wtfIGNORE_ALL | wtfSTOP | wtfCANCEL;
+				break;
+			default:
+				message += wxT("unknown error");
+				style = wtfOK | wtfCANCEL;
+				break;
+		}
+        
+		dlg = WXDEBUG_NEW wtfRenamerQuestion(NULL, wxT("Renamer error"), message, style);
+	}
+	rv = dlg->ShowModal();
 
 	dlg->Destroy();
 

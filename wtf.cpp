@@ -625,7 +625,27 @@ bool wtfMainTab::RenameFiles()
     delete(names_sets);
 
     wtfRenamePreview *dlg = WXDEBUG_NEW wtfRenamePreview(this, wxT("Rename information"), wxT("Here is the list of files that will be renamed and their new names:"), fset, rid);
-    dlg->ShowModal();
+    int rv = dlg->ShowModal();
+    wxString success_msg;
+
+    switch (rv)
+    {
+        case wtfRP_RENAME_BUTTON:
+        case wtfRP_LINK_BUTTON:
+        case wtfRP_SYMLINK_BUTTON:
+            m_modified = true;
+            success_msg = (rv == wtfRP_RENAME_BUTTON) ? wxT("Successfully renamed\nThe names set '") : ((rv == wtfRP_LINK_BUTTON) ? wxT("Hard links successfully created") : wxT("Symbolic links successfully created"));
+            if (rv == wtfRP_RENAME_BUTTON)
+            {
+                nset = fset->GetNamesSet(rid);
+                success_msg += nset->GetTitle();
+                success_msg += wxT("' has been marked as main");
+            }
+            wxMessageBox(success_msg, wxT("Info"), wxOK | wxICON_INFORMATION);
+            break;
+        default:
+            break;
+    }
 
     return true;
 }
@@ -680,7 +700,6 @@ FilesSetsCtrl::FilesSetsCtrl(wxWindow* parent)
     menu->Append(wtfSET_CM_MANAGE,      wxT("&Manage names sets..."));
     menu->AppendSeparator();
     menu->Append(wtfSET_CM_RENAME,      wxT("&Rename files..."));
-    menu->Append(wtfSET_CM_HARDLINK,    wxT("Create &hard links..."));
 }
 
 FilesSetsCtrl::~FilesSetsCtrl()
@@ -699,7 +718,6 @@ void FilesSetsCtrl::ShowContextMenu(wxContextMenuEvent& WXUNUSED(event))
     menu->Enable(wtfSET_CM_DELETE,      0);
     menu->Enable(wtfSET_CM_MANAGE,      0);
     menu->Enable(wtfSET_CM_RENAME,      0);
-    menu->Enable(wtfSET_CM_HARDLINK,    0);
 
     PopupMenu(menu);
 }
@@ -710,7 +728,6 @@ void FilesSetsCtrl::ShowSetContextMenu(wxListEvent& WXUNUSED(event))
     menu->Enable(wtfSET_CM_DELETE,      1);
     menu->Enable(wtfSET_CM_MANAGE,      1);
     menu->Enable(wtfSET_CM_RENAME,      1);
-    menu->Enable(wtfSET_CM_HARDLINK,    1);
 
     PopupMenu(menu);
     m_ctxmenu = true;

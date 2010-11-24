@@ -1,0 +1,22 @@
+#summary This page describes how to rename (or create hard links) your files using files set
+
+= How to rename or create hard links =
+
+  # Run the utility
+  # Go to the 'Manage files sets' tab
+  # Select desired files set: [http://forumbgz.ru/user/upload/file14627.png]
+  # Click 'Rename files...': [http://forumbgz.ru/user/upload/file14628.png]
+  # It is strongly recommended to select 'Create directories if not exists' option before proceed
+  # Click 'Rename' (or 'Create hard links') button. Thats all
+
+Here is original files (shown in Far File Manager) before creation of hard links:
+
+[http://forumbgz.ru/user/upload/file14629.png]
+
+(the number in the right column is the number of hard links to the file).
+
+Here is hard links to the original files (after):
+
+[http://forumbgz.ru/user/upload/file14630.png]
+
+(yeah, the number in right column has been increased for each file).

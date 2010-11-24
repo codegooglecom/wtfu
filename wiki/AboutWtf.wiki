@@ -10,3 +10,7 @@ You can edit the torrent file, but you still cannot join seeding, since names af
 There are two solutions to this problem. The first is to rename your files. And the second is to create hard links (alternative name for existing file).
 
 This utility will help you to do this automatically.
+
+See also:
+  * [ProcessSingleSUCcess using Process Single]
+  * [RenameSUCcess how to rename (or create hard links) using the utility]

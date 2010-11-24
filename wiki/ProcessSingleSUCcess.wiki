@@ -1,0 +1,15 @@
+#summary This page describes Process Single successful use case
+
+= Process Single =
+
+  # Run the utility
+  # Go to the "Make file set from .torrent file..."
+  # Select .torrent file and directory where the files live [http://forumbgz.ru/user/upload/file14624.png]
+  # Then press 'Process single' button. The utility will try to find files from selected torrent file in the directory specified
+  # If it succeed, you'll see this dialog: [http://forumbgz.ru/user/upload/file14625.png]
+  # Normally, the only thing you need is to type title of the files set
+  # Press Ok button. You'll see next dialog: [http://forumbgz.ru/user/upload/file14626.png]
+  # Type title of alternative names set and select directory
+
+See also:
+  * [RenameSUCcess renaming files (successful use case)]
